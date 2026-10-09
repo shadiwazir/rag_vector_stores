@@ -1,0 +1,11 @@
+# secrets
+.env
+# persisted vector stores / indexes
+stores/
+# python
+__pycache__/
+.venv/
+*.pyc
+# knowledge base content (keep the folder, ignore user files)
+knowledge_base/*
+!knowledge_base/.gitkeep

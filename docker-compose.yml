@@ -1,0 +1,16 @@
+# Postgres 16 with the pgvector extension preinstalled (for rag_pgvector.py)
+services:
+  pgvector:
+    image: pgvector/pgvector:pg16
+    container_name: rag-pgvector
+    environment:
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: rag
+      POSTGRES_DB: ragdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # data survives container restarts
+
+volumes:
+  pgdata:

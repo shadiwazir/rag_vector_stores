@@ -1,0 +1,26 @@
+# --- Core RAG stack ---
+langchain>=0.3
+langchain-core>=0.3
+langchain-community>=0.3
+langchain-text-splitters>=0.3
+langchain-openai>=0.3        # only needed for the openai backend
+langchain-huggingface>=0.1   # local backend (free, no API key)
+
+# --- Vector stores ---
+faiss-cpu>=1.8               # rag_faiss.py
+chromadb>=0.5                # rag_chroma.py
+langchain-chroma>=0.2        # rag_chroma.py
+langchain-postgres>=0.0.12   # rag_pgvector.py
+psycopg[binary]>=3.2         # rag_pgvector.py
+pinecone>=6                  # rag_pinecone.py
+langchain-pinecone>=0.2      # rag_pinecone.py
+
+# --- Local models (skip these 4 lines if you only use the openai backend) ---
+sentence-transformers>=3
+transformers>=4.44
+torch>=2.2
+accelerate>=0.33
+
+# --- Document loading & config ---
+pypdf>=4
+python-dotenv>=1
