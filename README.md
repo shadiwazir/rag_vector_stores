@@ -84,3 +84,18 @@ Selected via `.env`: `EMBEDDING_BACKEND` / `LLM_BACKEND`
 - Answers cite sources as `[S1]`, `[S2]` with file name, page, and score.
 - If you only use the OpenAI backend, you can skip the 4 heavy local-model
   lines in `requirements.txt` (torch, transformers, ...).
+
+## Web UI
+
+A small FastAPI app in `ui/` drives `build` / `ask` for every store from the browser
+(Build tab with knowledge-base upload, Ask tab with conversations). It runs the
+`rag_<store>.py` scripts as subprocesses in the same environment, so no second venv is needed.
+
+```bash
+pip install -r requirements.txt
+uvicorn ui.app:app --port 8000      # then open http://localhost:8000
+```
+
+Settings exposed in the UI: store, `EMBEDDING_BACKEND`, `LLM_BACKEND` (leave at
+"(.env default)" to use `.env`), `CHUNK_SIZE`, `CHUNK_OVERLAP`, `TOP_K`.
+Optional env vars: `RAG_BACKEND_DIR`, `RAG_BACKEND_PYTHON`, `RAG_TIMEOUT` (seconds, default 900).

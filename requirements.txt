@@ -24,3 +24,8 @@ accelerate>=0.33
 # --- Document loading & config ---
 pypdf>=4
 python-dotenv>=1
+
+# --- Web UI (ui/) - skip if you only use the CLI ---
+fastapi>=0.110
+uvicorn>=0.29
+python-multipart>=0.0.9

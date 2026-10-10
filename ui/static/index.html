@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>RAG UI</title>
+<style>
+:root{--bg:#f5f6fa;--card:#fff;--ink:#1f2430;--mut:#6b7280;--acc:#4f46e5;--acc2:#eef2ff;--bd:#e5e7eb;--err:#dc2626}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1117;--card:#181b24;--ink:#e6e8ee;--mut:#9aa3b2;--acc:#818cf8;--acc2:#222645;--bd:#2a2f3c;--err:#f87171}}
+*{box-sizing:border-box}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink);max-width:920px;margin:0 auto;padding:1.5rem 1rem 3rem}
+h2{margin:0 0 1rem;font-weight:650;letter-spacing:-.01em}
+nav{display:inline-flex;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:4px;gap:4px;margin-bottom:1rem}
+nav button{border:0;background:transparent;color:var(--mut);padding:.45rem 1.2rem;border-radius:7px;font:inherit;font-weight:550;cursor:pointer}
+nav button.on{background:var(--acc);color:#fff}
+fieldset{background:var(--card);border:1px solid var(--bd);border-radius:12px;margin:0 0 1rem;padding:1rem 1.1rem;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+legend{font-weight:600;color:var(--mut);font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;padding:0 .4rem}
+label{display:inline-flex;flex-direction:column;gap:.25rem;margin:.3rem 1rem .3rem 0;font-size:.8rem;color:var(--mut);font-weight:550}
+select,input[type=number],textarea,input[type=file]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:.45rem .6rem}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:-1px}
+input[type=number]{width:6.5rem}
+textarea{width:100%;height:5rem;resize:vertical;margin-bottom:.6rem}
+button{font:inherit;cursor:pointer}
+#up,#go,.sendbtn,.plus{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:.5rem 1.1rem;font-weight:600}
+#up:hover,#go:hover,.sendbtn:hover,.plus:hover{filter:brightness(1.1)}
+.askrow{display:flex;gap:.6rem;align-items:flex-start}
+.askrow textarea{margin:0;height:3.2rem;flex:1}
+.msg{position:relative;margin-top:.7rem;padding:.5rem 2.4rem .5rem .8rem;border-left:3px solid var(--bd);border-radius:4px}
+.msg.q{border-color:var(--acc)}
+.msg.err pre{color:var(--err)}
+.msg b{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.msg pre{margin:.2rem 0 0;background:transparent;border:0;padding:0}
+.head{display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin:-.4rem -.4rem .2rem 0}
+.tog{flex:1;min-width:0;text-align:left;background:none;border:0;color:var(--ink);font-weight:600;padding:.2rem .3rem;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tog:hover{background:var(--acc2)}
+.close{width:1.5rem;height:1.5rem;border:0;border-radius:6px;background:transparent;color:var(--mut);font-size:.8rem;line-height:1}
+.close:hover{background:var(--acc2);color:var(--err)}
+.plus{margin-bottom:.2rem}
+button:disabled{opacity:.55;cursor:wait}
+ul{list-style:none;padding:0;margin:.6rem 0 0}
+li{display:flex;justify-content:space-between;align-items:center;padding:.4rem .6rem;border-radius:8px;font-size:.9rem}
+li:hover{background:var(--acc2)}
+li button{background:none;border:0;color:var(--err);font-size:.8rem}
+pre{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:.7rem;white-space:pre-wrap;max-height:320px;overflow:auto;font-size:.85rem;margin:.5rem 0 0}
+#hist{margin-top:1.2rem;display:flex;flex-direction:column;gap:.8rem}
+.qa{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:.9rem 1rem;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+
+.qa .del{position:absolute;top:.5rem;right:.5rem;width:1.9rem;height:1.9rem;border:0;border-radius:6px;background:transparent;color:var(--mut);font-size:1rem}
+.qa .del:hover{background:var(--acc2);color:var(--err)}
+.err{color:var(--err)}
+.tab{display:none}.tab.on{display:block}
+</style></head><body>
+<h2>RAG Vector Store UI</h2>
+<nav><button data-t="build" class="on">Build</button> <button data-t="ask">Ask</button></nav>
+
+<fieldset><legend>Settings</legend>
+<label>Store <select id="store"><option>faiss</option><option>chroma</option><option>pgvector</option><option>pinecone</option></select></label>
+<label>Embedding backend <select id="emb"><option value="">(.env default)</option><option>auto</option><option>local</option><option>openai</option><option>fake</option></select></label>
+<label>LLM backend <select id="llm"><option value="">(.env default)</option><option>auto</option><option>local</option><option>openai</option><option>fake</option></select></label><br>
+<label>Chunk size <input type="number" id="cs" value="1000" min="1"></label>
+<label>Chunk overlap <input type="number" id="co" value="200" min="0"></label>
+<label>Top K <input type="number" id="k" value="4" min="1"></label>
+</fieldset>
+
+<div id="build" class="tab on">
+<fieldset><legend>Knowledge base (.pdf / .txt)</legend>
+<input type="file" id="file" multiple accept=".pdf,.txt"> <button id="up">Upload</button>
+<ul id="files"></ul></fieldset>
+<button id="go">Run build</button> <span id="bs"></span>
+<pre id="bout"></pre>
+</div>
+
+<div id="ask" class="tab">
+<button id="newconv" class="plus" title="New conversation">＋ New conversation</button>
+<div id="hist"></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id===b.dataset.t));
+});
+const cfg=()=>{const c={store:$('store').value,chunk_size:+$('cs').value,chunk_overlap:+$('co').value,top_k:+$('k').value};
+  if($('emb').value)c.embedding_backend=$('emb').value; if($('llm').value)c.llm_backend=$('llm').value; return c};
+const post=async(u,b)=>{const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
+  const j=await r.json(); if(!r.ok)throw new Error(typeof j.detail==='string'?j.detail:JSON.stringify(j.detail)); return j};
+async function files(){const l=await (await fetch('/api/files')).json();
+  $('files').innerHTML='';l.forEach(f=>{const li=document.createElement('li');li.textContent=`${f.name} (${f.size} B) `;
+  const d=document.createElement('button');d.textContent='delete';d.onclick=async()=>{await fetch('/api/files/'+encodeURIComponent(f.name),{method:'DELETE'});files()};
+  li.append(d);$('files').append(li)})}
+$('up').onclick=async()=>{const fd=new FormData();[...$('file').files].forEach(f=>fd.append('files',f));
+  const r=await fetch('/api/upload',{method:'POST',body:fd});if(!r.ok)alert((await r.json()).detail);$('file').value='';files()};
+$('go').onclick=async()=>{$('bs').textContent='Building...';$('bout').textContent='';$('go').disabled=true;
+  try{const j=await post('/api/build',cfg());$('bs').textContent=j.ok?'Done':'Failed';$('bs').className=j.ok?'':'err';
+    $('bout').textContent=j.stdout+(j.stderr?'\n--- stderr ---\n'+j.stderr:'')}
+  catch(e){$('bs').textContent=e.message;$('bs').className='err'} $('go').disabled=false};
+// Each conversation: {msgs:[{role:'q'|'a'|'err', text, sources}], busy}
+const convs=[];
+const transcript=c=>c.msgs.filter(m=>m.role!=='err').map(m=>(m.role==='q'?'Q: ':'A: ')+m.text).join('\n');
+function render(){
+  const h=$('hist');h.innerHTML='';
+  convs.forEach(c=>{
+    const d=document.createElement('div');d.className='qa';
+    const close=document.createElement('button');close.className='close';close.title='Delete conversation';close.textContent='✕';
+    close.onclick=()=>{convs.splice(convs.indexOf(c),1);render()};
+    const first=c.msgs.find(m=>m.role==='q');
+    const tog=document.createElement('button');tog.className='tog';
+    tog.title=c.collapsed?'Expand':'Collapse';
+    tog.textContent=(c.collapsed?'▸ ':'▾ ')+(first?first.text:'New conversation');
+    tog.onclick=()=>{c.collapsed=!c.collapsed;render()};
+    const head=document.createElement('div');head.className='head';head.append(tog,close);d.append(head);
+    const body=document.createElement('div');
+    const row=document.createElement('div');row.className='askrow';
+    const t=document.createElement('textarea');t.placeholder='Ask a question...';t.value=c.draft||'';
+    t.oninput=()=>c.draft=t.value;
+    const send=document.createElement('button');send.className='sendbtn';send.textContent=c.busy?'Thinking...':'Ask';send.disabled=c.busy;
+    const go=()=>ask(c);send.onclick=go;
+    t.onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();go()}};
+    row.append(t,send);body.append(row);
+    // newest message first; only the newest one gets a delete icon
+    for(let i=c.msgs.length-1;i>=0;i--){
+      const m=c.msgs[i];const it=document.createElement('div');it.className='msg '+m.role;
+      const label=document.createElement('b');label.textContent=m.role==='q'?'You':m.role==='a'?'Answer':'Error';
+      const pre=document.createElement('pre');
+      pre.textContent=m.text+(m.sources?'\n\nSources:\n'+m.sources:'');
+      it.append(label,pre);
+      if(i===c.msgs.length-1&&!c.busy){
+        const x=document.createElement('button');x.className='del';x.title='Delete latest message';x.textContent='🗑';
+        x.onclick=()=>{c.msgs.pop();render()};it.append(x);
+      }
+      body.append(it);
+    }
+    if(!c.collapsed)d.append(body);
+    h.append(d);
+  });
+}
+async function ask(c){
+  const q=(c.draft||'').trim();if(!q||c.busy)return;
+  const history=transcript(c);
+  c.msgs.push({role:'q',text:q});c.draft='';c.busy=true;render();
+  // history in order (Q1, A1, ...) followed by the new question, in one request
+  const question=history?history+'\nQ: '+q:q;
+  try{const j=await post('/api/ask',{...cfg(),question});
+    c.msgs.push(j.ok?{role:'a',text:j.answer,sources:j.sources}:{role:'err',text:j.stderr||j.stdout})}
+  catch(e){c.msgs.push({role:'err',text:e.message})}
+  c.busy=false;render();
+}
+$('newconv').onclick=()=>{convs.unshift({msgs:[],draft:''});render()};
+convs.unshift({msgs:[],draft:''});render();
+files();
+</script></body></html>
