@@ -4,13 +4,26 @@ services:
     image: pgvector/pgvector:pg16
     container_name: rag-pgvector
     environment:
-      POSTGRES_USER: rag
-      POSTGRES_PASSWORD: rag
-      POSTGRES_DB: ragdb
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data  # data survives container restarts
+
+  app:
+    build: .
+    container_name: rag-ui
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./knowledge_base:/app/knowledge_base
+      - ./stores:/app/stores
+    depends_on:
+      - pgvector
 
 volumes:
   pgdata:

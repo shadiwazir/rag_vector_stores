@@ -26,7 +26,8 @@ rag_vector_stores/
 ├── rag_chroma.py          # variation 2: Chroma
 ├── rag_pgvector.py        # variation 3: pgvector
 ├── rag_pinecone.py        # variation 4: Pinecone
-├── docker-compose.yml     # postgres+pgvector for the pgvector variation
+├── Dockerfile             # container image for the UI and RAG backends
+├── docker-compose.yml     # UI and postgres+pgvector services
 ├── requirements.txt
 └── .env.example
 ```
@@ -62,6 +63,10 @@ python rag_pgvector.py build
 python rag_pgvector.py ask "your question"
 ```
 
+When using the CLI directly on the host with the copied `.env`, change the
+hostname in `PGVECTOR_URL` from `pgvector` to `localhost`. The Dockerized app
+uses the `pgvector` service hostname automatically.
+
 ### Pinecone (needs an API key)
 
 Add `PINECONE_API_KEY=...` to `.env` (free tier works), then `build` / `ask`.
@@ -90,6 +95,20 @@ Selected via `.env`: `EMBEDDING_BACKEND` / `LLM_BACKEND`
 A small FastAPI app in `ui/` drives `build` / `ask` for every store from the browser
 (Build tab with knowledge-base upload, Ask tab with conversations). It runs the
 `rag_<store>.py` scripts as subprocesses in the same environment, so no second venv is needed.
+
+Run the UI and pgvector database in Docker:
+
+```bash
+cp .env.example .env       # edit secrets and set a strong POSTGRES_PASSWORD
+docker compose up --build
+```
+
+Open http://localhost:8000. Compose loads `.env` into the app container's
+environment (`env_file`) and passes the PostgreSQL settings to the database; it
+is not copied into the Docker image or stored in `docker-compose.yml`. After
+editing `.env`, run `docker compose up -d` again to recreate the containers. The `knowledge_base/` and
+`stores/` directories are mounted from the host, so uploaded documents and
+built indexes persist across container restarts.
 
 ```bash
 pip install -r requirements.txt
